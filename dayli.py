@@ -1,21 +1,65 @@
+# 1. imports
+# ✔️
 from datetime import datetime
 import os
-# connecting database
+
 import mysql.connector
 from mysql.connector import Error
 
+# 2. constants and configuration
+# ✔️
+
 FILENAME = "journal.txt"
 
-# for database
-db = None
+# Mood emoji dictionary (defined once globally)
+MOOD_EMOJIS = {
+    'happy': '😊',
+    'sad': '😢',
+    'excited': '🤩',
+    'tired': '😴',
+    'neutral': '😐',
+    'angry': '😡',
+    'calm': '😌',
+    'grateful': '🙏',
+    'anxious': '😰',
+    'peaceful': '🕊️',
+    'energetic': '⚡',
+    'stressed': '😫',
+    'inspired': '💡',
+    'melancholic': '🌧️',
+    'lonely': '🌙',
+    'hopeful': '🌟',
+    'content': '☺️'
+}
 
-# database configuration
+db = None
 DB_CONFIG = {
     'host' : 'localhost',
     'database' : 'journal_db',
     'user' : 'root', # default XAMPP user
     'password' : '' # default XAMPP password (empty)
 }
+
+# 3. utility functions (clear_screen , display_menu)
+# ✅
+def clear_screen():
+    os.system('cls' if os.name=='nt' else 'clear')
+
+def display_menu():
+    # clear_screen()
+    print("\n" + "=" * 20)
+    print("✨   My Journal  ✨")
+    print("=" * 20)
+    print("\n1. Write a journal entry")
+    print("2. View all entries")
+    print("3. Search entries")
+    print("4. Edit an entry [Not available]")
+    print("5. Delete an entry [Not available]")
+    print("6. View statistic [Not available]")
+    print("7. Exit")
+    print()
+
+# 4. Database class
 
 class JournalDatabase:
     # Handle all database operation for the journal
@@ -25,25 +69,30 @@ class JournalDatabase:
         self.connect()
         self.create_table_if_not_exists()
 
+    #✅ 
     def connect(self):
-        # establish database connection
-        # try : includes the code that may break
-        print("\n>>🛜  Connecting to MySQL database...")
-        try:
-            self.connection = mysql.connector.connect(**DB_CONFIG)
-            if self.connection.is_connected():
-                print("\n>> ✅ Connected to MySQL database!")
+        while True:
+            clear_screen()
+            print("\n🛜  Connecting to MySQL database...")
+            try:
+                self.connection = mysql.connector.connect(**DB_CONFIG)
+                if self.connection.is_connected():
+                    print("\n>>✅ Connected to MySQL database!")
+                    break
 
-        # except : contains the code which manages the crisis 
-        except Error as e:
-            print(f"\n>>❌ Error connecting to MySQL : {e}")
-            print("\nPlease make sure:")
-            print("(1) XAMPP is running")
-            print("(2) MySQL services is started")
-            print("(3) Database 'journal_db exists'")
-            input("\n> Press ENTER to exit..")
-            exit()
-    
+            except Error as e:
+                print(f"\n>> ❌  Error connecting to MySQL database -> {e}")
+                print("\nPlease make sure ;")
+                print("• XAMPP is running")
+                print("• MySQL service is started")
+                print("• Database 'journal_db' exists")
+
+                choice = input("\n>>⚠️  Try again? (y/n): ").lower().strip()
+                if choice == 'n':
+                    print("📖 Exiting.. See you 👋")
+                    exit()
+
+
     def create_table_if_not_exists(self):
         # create the "entries" table if it doesn't exists
         try:
@@ -107,25 +156,47 @@ class JournalDatabase:
             return entries
         except Error as e:
             print(f"🔴 Error fetching entries : {e}")
-        
-# 1. search :main menu
-def display_menu():
-    # clear_screen()
-    print("\n" + "=" * 20)
-    print("✨ My Journal ✨")
-    print("=" * 20)
-    print("\n1 - Write a journal entry")
-    print("2 - View all entries")
-    print("3 - Search entries")
-    print("4 - Edit an entry")
-    print("5 - Delete an entry")
-    print("6 - View statistic")
-    print("7 - Exit")
-    print()
 
-# WRITE_ENTRY
-def write_entry(db): # <-- Pass db as parameter!
-    """Write a new journal entry with timestamp"""
+    # def get_entry_by_id(self,entry_id):
+    #     try:
+    #         cursor = self.connectior.cursor(dictionary=True)
+    #         cursor.execute("""
+    #             SELECT id, entry_text, entry_date, mood, tags, word_count
+    #             FROM entries
+    #             WHERE id = %s    
+    #     """)
+    #     except Error as e:
+
+
+    def search_entries(self, keyword):
+        # search entries by keyword in content, mood, or tags (MySQL version)
+        try:
+            cursor = self.connection.cursor(dictionary = True)
+
+            sql = """
+                SELECT id, entry_text, entry_date, mood, tags, word_count
+                FROM entries
+                WHERE entry_text LIKE %s
+                    OR mood LIKE %s
+                    OR tags LIKE %s
+                ORDER BY entry_date ASC"""
+
+            params = (f'%{keyword}%', f'%{keyword}%', f'%{keyword}%')
+
+            cursor.execute(sql, params)
+            results = cursor.fetchall()
+            cursor.close()
+            return results 
+        except Error as e:
+            print(f"🔴  Error search entries: {e}")
+            return []
+        
+
+        keyword = input("\n")
+        
+
+# 5. core functions
+def write_entry(db):
 
     print("\n> ✍️   Write your journal entry")
     entry_text = input().strip()
@@ -134,23 +205,14 @@ def write_entry(db): # <-- Pass db as parameter!
         print(">> 🔴  Entry cannot be empty!")
         return
 
-    # get mood and tags (not written)
-    # mood
     print("\n How are you feeling? (happy/sad/excited/tired/neutral)")
-    # mood = input("\n> Enter your mood [Calm, Happy, Sad, Angry, ...]\n")
     mood = input("> ").strip().lower()
 
-    # if mood not in ['happy' , 'sad' , 'excited' , 'tired' , 'neutral']:
-    #     mood = None # Invalid mood, set to None
-
-    # tags
     print("\n Add tags (comma-seperate, e.g., coding,gym,travel)")
-    # tags = input("\n> Enter tags [#anxious, #peaceful, #grieving, ...]\n")
-    tags_input = input("> ").strip()
-    tags = tags_input if tags_input else None # check/learn this line
 
-    # call the method on the db instance
-    # save to DATABASE only
+    tags_input = input("> ").strip()
+    tags = tags_input if tags_input else None
+
     entry_id = db.add_entry(entry_text, mood, tags)
 
     if entry_id:
@@ -162,107 +224,145 @@ def write_entry(db): # <-- Pass db as parameter!
     else:
         print("\n🔴  Failed to save entry to database.")
 
-    # ---------------------
-    
 
-# (3)
+# ✅
 def view_entries(db):
-    # Display all entries with formatting
     clear_screen()
-
     entries = db.get_all_entries()
     
     if not entries:
         print("\n>> 📬  No entries found. Start writing your journal!")
         return
 
-    print(f"\nYour Entries : {len(entries)}")
+    # Header
+    print("\n" + ("•" * 50))
+    print(f"\n📖    My Journal > ({len(entries)}) entries   🌟")
+    print("•" *50)
 
+    # body
     for entry in entries:
-        print(f"\nEntry {entry['id']}")
-        print(f"{entry ['entry_date'].strftime('%Y/%m/%d %I:%M %p')}")
 
+        # Entry ID and date
+        print(f"\n📝 Entry #{entry['id']}")
+        date_str = entry['entry_date'].strftime("%Y/%m/%d %I:%M %p")
+        print(f"📅 {date_str}")
+
+        # Mood with emoji
         if entry['mood']:
-            mood_emoji = {
-                'happy' : '😊',
-                'sad' : '😢',
-                'excited' : '🤩',
-                'tired' : '😴',
-                'neutral' : '😐'
-            }.get(entry['mood'],'')
-
-            print(f"Mood: {entry['mood']} {mood_emoji}")
-
+            mood_emoji = MOOD_EMOJIS.get(entry['mood'].lower(),'')
+            print(f"🎭 Mood : {entry['mood']} {mood_emoji}")
+        
         if entry['tags']:
-            print(f"Tags : {entry['tags']}")
+            print(f"🏷️ Tags: {entry['tags']}")
 
-        print(f"Words : {entry['word_count']}")
-        print(entry['entry_text'])
+        # wourd count
+        if entry.get('word_count'):
+            print(f"📊 Words: {entry['word_count']}")
 
-    input("\nPress ENTER to return to the menu")
+        # Entry content
+        print(f"\n{entry['entry_text']}")
+        print("-" *40)
+
+    input("\n>>Press ENTER to return to the menu >")
     clear_screen()
-    # works!
 
 
-# 4. searching for entries (choice 3)
-def search_entries():
-    """ Search for entries containing a keyword"""
+def search_entries(db):
+    clear_screen()
 
-    if not os.path.exists(FILENAME):
-        print("\nNo entries to search.")
-        return
-    keyword = input("\nEnter search term: ").strip().lower()
+    keyword = input("\n🔍 Enter search term: ").strip().lower()
 
     if not keyword:
-        print("Search term cannot be empty!")
+        print(">>⚠️   Search term cannot be empty!")
         return
-    
+
     try:
-        # with open -- ?
-        with open(FILENAME, "r") as file:
-            content = file.read()
+        results = db.search_entries(keyword)
 
-            # Split entries by the seperator
-            entries = content.split("--------------------------------")
+        if(results):
+            print(f"\n📖 Found {len(results)} entry(ies) containing '{keyword}'")
+            print("-"*40)
 
-            found_entries = []
-            # for loop
-            for entry in entries:
-                # if condition
-                if entry.strip() and keyword in entry.lower():
-                    found_entries.append(entry.strip())
-
-            # if condition (print + for loop)
-            if found_entries:
-                # do if true
-                print(f"\nFound {len(found_entries)} entry(ies) containing '{keyword}' : ")
-                print("="*20)
-
-                # for loop
-                for i,entry in enumerate(found_entries,1):
-                    print(f"\n--- Entry{i} ---")
-                    print(entry)
-                    print("-"*20)
-            # else (do if false) 
-            else:
-                print(f"\nNo entries found containing '{keyword}'")
+            for i,entry in enumerate(results,1):
+                print(f"\n--- Entry {i} ---")
+                print(f"📝 {entry['entry_text']}")
                 
-    # except runs when something breaks in try -- it's like what to do(except) after crisis(try)
+                if entry.get('mood'):
+                    print(f"🎭 Mood: {entry['mood']}")
+
+                if entry.get('tags'):
+                    print(f"🏷️ Tags: {entry['tags']}")
+
+                print(f"📅 {entry['entry_date']}")
+                print("-"*30)
+
+            input("\n>> Press ENTER to return to menu")
+            clear_screen()
+        else:
+            print(f"🟡 No entries found containing '{keyword}'")
+
     except Exception as e:
-        print(f"\n❌ Error searching entries: {e}")
+        print(f"⚠️   Error : {e}")
+
+def edit_entry(db):
+    clear_screen()
+
+    try:
+        entries = db.get_all_entries(limit=20)
+        if not entries:
+            print("\n>> 📫 No entries found to edit!")
+            input("\n>> Press ENTER to return to home")
+            clear_screen()
+            return
+
+        print("\n" + "="*50)
+        print("📝 Your Recent Entries:")
+        print("="*50)
+
+        for entry in entries:
+            print(f"\n ID: {entry['id']}")
+            print(f"🗓️  {entry['entry_date'].strftime('%Y %m %d %I %M %p')}")
+
+            preview = entry['entry_text']
+            if len(preview) >100:
+                preview = preview[:100] + "..."
+            print(f"📝 {preview}")
+            print("-")*30
+
+        entry_id = input("\n>> ✏️ Enter the ID of the entry you want to edit >").strip()
+
+        if not entry_id.isdigit():
+            print("⚠️ Invalid ID! Please enter a valid ID.")
+            input("\n>> Press ENTER to return to menu.")
+            clear_screen()
+            return
+
+        # getting entry from database
+        entry = db.get_entry_by_id(int(entry_id))
+
+        if not entry:
+            print(f"❌ No entry found with ID: {entry_id}")
+            input("\n Press ENTER to return to menu.")
+            clear_screen()
+            return
+
+        # showing current entry
+        print("\n" + "-"*20)
+        print(f"")
 
 
-# (5) main method
+    except Exception as e:
+        print(f"\n🔴 Error editing entry: {e}")
+        input("\nPress ENTER to return to menu")
+        clear_screen()
+
 def main():
-    # (1)
     db = JournalDatabase()
 
     while(True):
         display_menu()
         choice = int(input("> Enter choice number(1-7): "))
 
-        # writing if conditions to execute certain operations
-        # for now, idk what they are executing
         if (choice==1):
             write_entry(db)
         elif (choice==2):
@@ -276,17 +376,10 @@ def main():
         elif(choice == 6):
             show_statistics(db)
         elif (choice == 7):
+            clear_screen()
             print("\n>> 👋 Goodbye! ")
             break
 
-
-
-# (6) clear screen
-def clear_screen():
-    os.system('cls' if os.name=='nt' else 'clear')
-
-# (7) I think you use this so that main function runs first
-# entry point of the program
 if __name__ == "__main__":
     main()
 
