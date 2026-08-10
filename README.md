@@ -9,8 +9,8 @@
 - Searching mood, tags and entries.
 
 (Not available yet)
-- Editing entries.
-- Deleting entries.
-- Viewing statistics.
+- Editing an entry.
+- Deleting an entry.
+- Statistics.
 
 
