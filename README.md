@@ -1,4 +1,5 @@
 <img width="1697" height="927" alt="ChatGPT Image Aug 5, 2026, 02_32_03 PM" src="https://github.com/user-attachments/assets/9312bce5-8ac5-4af6-a2da-50634bf25a91" />
+
 *One DAY at Time, Document you LIfe...*
 
 
