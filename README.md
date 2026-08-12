@@ -1,10 +1,11 @@
 <img width="1697" height="927" alt="ChatGPT Image Aug 5, 2026, 02_32_03 PM" src="https://github.com/user-attachments/assets/9312bce5-8ac5-4af6-a2da-50634bf25a91" />
+*One DAY at Time, Document you LIfe...*
 
-~One day at~
+
 # Flowchart
 <img width="1717" height="993" alt="image" src="https://github.com/user-attachments/assets/2e7b8305-539f-4433-990b-f98825b893e0" />
 
-*One DAY at Time, Document you LIfe...*
+
 
 # ⛏️ Functions Available
 - Writing a journal entry.
