@@ -3,7 +3,7 @@
 
 # 💭 What DAYLI means
 DAY → DAY <br />
-Li → Life
+LI → Life
 
 *One DAY at Time, Document your LIfe...*
 
