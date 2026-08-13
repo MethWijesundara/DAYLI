@@ -1,9 +1,14 @@
+# 🎨 Logo
 <img width="1697" height="927" alt="ChatGPT Image Aug 5, 2026, 02_32_03 PM" src="https://github.com/user-attachments/assets/9312bce5-8ac5-4af6-a2da-50634bf25a91" />
+
+# 💭 What DAYLI means
+DAY → DAY
+Li → Life
 
 *One DAY at Time, Document your LIfe...*
 
 
-# Flowchart
+# 📊 Flowchart
 <img width="1717" height="993" alt="image" src="https://github.com/user-attachments/assets/2e7b8305-539f-4433-990b-f98825b893e0" />
 
 
@@ -18,4 +23,5 @@
 - Deleting an entry.
 - Statistics.
 
-
+# 📈 Progress
+This project is still in progress. There're many unusable functions.
