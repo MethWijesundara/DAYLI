@@ -8,7 +8,7 @@
 
 
 
-# ⛏️ Functions Available
+# ⛏️ Functions
 - Writing a journal entry.
 - Viewing entries on the database.
 - Searching mood, tags and entries.
