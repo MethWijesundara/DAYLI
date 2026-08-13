@@ -1,17 +1,14 @@
 # 1. imports
-# ✔️
 from datetime import datetime
 import os
 
 import mysql.connector
 from mysql.connector import Error
 
-# 2. constants and configuration
-# ✔️
-
+# 2. constants
 FILENAME = "journal.txt"
 
-# Mood emoji dictionary (defined once globally)
+# 3. Mood emoji dictionary (defined once globally)
 MOOD_EMOJIS = {
     'happy': '😊',
     'sad': '😢',
@@ -32,6 +29,7 @@ MOOD_EMOJIS = {
     'content': '☺️'
 }
 
+# 4. Database configuration
 db = None
 DB_CONFIG = {
     'host' : 'localhost',
@@ -40,16 +38,16 @@ DB_CONFIG = {
     'password' : '' # default XAMPP password (empty)
 }
 
-# 3. utility functions (clear_screen , display_menu)
+# 5. utility functions (clear_screen , display_menu)
 # ✅
 def clear_screen():
     os.system('cls' if os.name=='nt' else 'clear')
 
 def display_menu():
     # clear_screen()
-    print("\n" + "=" * 20)
+    print("\n" + "-" * 20)
     print("✨   My Journal  ✨")
-    print("=" * 20)
+    print("-" * 20)
     print("\n1. Write a journal entry")
     print("2. View all entries")
     print("3. Search entries")
@@ -59,7 +57,7 @@ def display_menu():
     print("7. Exit")
     print()
 
-# 4. Database class
+# 6. Database class
 
 class JournalDatabase:
     # Handle all database operation for the journal
@@ -69,7 +67,6 @@ class JournalDatabase:
         self.connect()
         self.create_table_if_not_exists()
 
-    #✅ 
     def connect(self):
         while True:
             clear_screen()
@@ -77,17 +74,17 @@ class JournalDatabase:
             try:
                 self.connection = mysql.connector.connect(**DB_CONFIG)
                 if self.connection.is_connected():
-                    print("\n>>✅ Connected to MySQL database!")
+                    print("\n✅ Connected to MySQL database!")
                     break
 
             except Error as e:
-                print(f"\n>> ❌  Error connecting to MySQL database -> {e}")
+                print(f"\n❌  Error connecting to MySQL database -> {e}")
                 print("\nPlease make sure ;")
                 print("• XAMPP is running")
                 print("• MySQL service is started")
                 print("• Database 'journal_db' exists")
 
-                choice = input("\n>>⚠️  Try again? (y/n): ").lower().strip()
+                choice = input("\n⚠️  Try again? (y/n): ").lower().strip()
                 if choice == 'n':
                     print("📖 Exiting.. See you 👋")
                     exit()
