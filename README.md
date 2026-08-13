@@ -24,4 +24,4 @@ LI → Life
 - Statistics.
 
 # 📈 Progress
-This project is still in progress. There're many unusable functions.
+This project is currently undergoing a refactoring process. Only dayli.py file works for now.
