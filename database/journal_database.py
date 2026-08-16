@@ -1,8 +1,7 @@
 import mysql.connector
 from mysql.connector import Error
 
-from config import DB_CONFIG;
-import os;
+from config import DB_CONFIG
 
 class JournalDatabase:
 
@@ -100,6 +99,7 @@ class JournalDatabase:
             return entries
         except Error as e:
             print(f"🔴 Error fetching entries : {e}")
+            return []
 
     # 6. Searching through an entry for a specific keyword.
     def search_entries(self, keyword):
@@ -125,4 +125,4 @@ class JournalDatabase:
             return []
         
 
-        keyword = input("\n")
+        # keyword = input("\n")

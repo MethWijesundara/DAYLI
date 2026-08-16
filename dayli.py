@@ -2,46 +2,157 @@
 from datetime import datetime
 import os
 
-
+import mysql.connector
+from mysql.connector import Error
 
 # 2. constants
 FILENAME = "journal.txt"
 
 # 3. Mood emoji dictionary (defined once globally)
-
+MOOD_EMOJIS = {
+    'happy': '😊',
+    'sad': '😢',
+    'excited': '🤩',
+    'tired': '😴',
+    'neutral': '😐',
+    'angry': '😡',
+    'calm': '😌',
+    'grateful': '🙏',
+    'anxious': '😰',
+    'peaceful': '🕊️',
+    'energetic': '⚡',
+    'stressed': '😫',
+    'inspired': '💡',
+    'melancholic': '🌧️',
+    'lonely': '🌙',
+    'hopeful': '🌟',
+    'content': '☺️'
+}
 
 # 4. Database configuration
 db = None
+DB_CONFIG = {
+    'host' : 'localhost',
+    'database' : 'journal_db',
+    'user' : 'root', # default XAMPP user
+    'password' : '' # default XAMPP password (empty)
+}
 
 # 5. utility functions (clear_screen , display_menu)
 # ✅
 def clear_screen():
     os.system('cls' if os.name=='nt' else 'clear')
 
-
+def display_menu():
+    # clear_screen()
+    print("\n" + "-" * 20)
+    print("✨   My Journal  ✨")
+    print("-" * 20)
+    print("\n1. Write a journal entry")
+    print("2. View all entries")
+    print("3. Search entries")
+    print("4. Edit an entry [Not available]")
+    print("5. Delete an entry [Not available]")
+    print("6. View statistic [Not available]")
+    print("7. Exit")
+    print()
 
 # 6. Database class
 
 class JournalDatabase:
     # Handle all database operation for the journal
     def __init__(self):
-        
+        # initialize database connection
+        self.connection = None
+        self.connect()
+        self.create_table_if_not_exists()
 
     def connect(self):
-        
+        while True:
+            clear_screen()
+            print("\n🛜  Connecting to MySQL database...")
+            try:
+                self.connection = mysql.connector.connect(**DB_CONFIG)
+                if self.connection.is_connected():
+                    print("\n>>✅ Connected to MySQL database!")
+                    break
+
+            except Error as e:
+                print(f"\n>> ❌  Error connecting to MySQL database -> {e}")
+                print("\nPlease make sure ;")
+                print("• XAMPP is running")
+                print("• MySQL service is started")
+                print("• Database 'journal_db' exists")
+
+                choice = input("\n>>⚠️  Try again? (y/n): ").lower().strip()
+                if choice == 'n':
+                    print("📖 Exiting.. See you 👋")
+                    exit()
 
 
     def create_table_if_not_exists(self):
         # create the "entries" table if it doesn't exists
-        
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS entries (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    entry_text TEXT NOT NULL,
+                    entry_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    mood VARCHAR(20) NULL,
+                    tags VARCHAR(255) NULL,
+                    word_count INT DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP        
+                )           
+            """)
+            self.connection.commit()
+            cursor.close()
+
+        except Error as e : 
+            print(f"❌ Error creating table : {e}")
         
     def add_entry(self, entry_text, mood = None, tags = None):
         # Add a new journal entry
+        try:
+            cursor = self.connection.cursor()
+
+            # calculate word count
+            word_count = len(entry_text.split())
+
+            query = """
+                INSERT INTO entries(entry_text, mood, tags, word_count)
+                VALUES (%s, %s, %s, %s)
+            """
+            values = (entry_text, mood, tags, word_count)
+
+            cursor.execute(query,values)
+            self.connection.commit()
+
+            entry_id = cursor.lastrowid
+            cursor.close()
+            return entry_id
         
+        except Error as e:
+            print(f"❌ Error adding entry: {e}")
+            return None
 
     def get_all_entries(self,limit=50):
         # This function gets all entries, newest ones first
-        
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            cursor.execute("""
+            SELECT id,entry_text,entry_date,mood,tags,word_count
+            FROM entries
+            ORDER BY entry_date DESC
+            LIMIT %s
+
+            """, (limit,))
+            entries = cursor.fetchall()
+            cursor.close()
+            return entries
+        except Error as e:
+            print(f"🔴 Error fetching entries : {e}")
 
     # def get_entry_by_id(self,entry_id):
     #     try:
@@ -56,15 +167,101 @@ class JournalDatabase:
 
     def search_entries(self, keyword):
         # search entries by keyword in content, mood, or tags (MySQL version)
+        try:
+            cursor = self.connection.cursor(dictionary = True)
+
+            sql = """
+                SELECT id, entry_text, entry_date, mood, tags, word_count
+                FROM entries
+                WHERE entry_text LIKE %s
+                    OR mood LIKE %s
+                    OR tags LIKE %s
+                ORDER BY entry_date ASC"""
+
+            params = (f'%{keyword}%', f'%{keyword}%', f'%{keyword}%')
+
+            cursor.execute(sql, params)
+            results = cursor.fetchall()
+            cursor.close()
+            return results 
+        except Error as e:
+            print(f"🔴  Error search entries: {e}")
+            return []
         
+
+        keyword = input("\n")
         
 
 # 5. core functions
+def write_entry(db):
 
+    print("\n> ✍️   Write your journal entry")
+    entry_text = input().strip()
+
+    if (not entry_text):
+        print(">> 🔴  Entry cannot be empty!")
+        return
+
+    print("\n How are you feeling? (happy/sad/excited/tired/neutral)")
+    mood = input("> ").strip().lower()
+
+    print("\n Add tags (comma-seperate, e.g., coding,gym,travel)")
+
+    tags_input = input("> ").strip()
+    tags = tags_input if tags_input else None
+
+    entry_id = db.add_entry(entry_text, mood, tags)
+
+    if entry_id:
+        print(f"\n> 🟢  Entry saved successfully! (ID: {entry_id})")
+        if mood:
+            print(f"    Mood: {mood}")
+        if tags:
+            print(f"    Tags: {tags}")
+    else:
+        print("\n🔴  Failed to save entry to database.")
 
 
 # ✅
+def view_entries(db):
+    clear_screen()
+    entries = db.get_all_entries()
+    
+    if not entries:
+        print("\n>> 📬  No entries found. Start writing your journal!")
+        return
 
+    # Header
+    print("\n" + ("•" * 50))
+    print(f"\n📖    My Journal > ({len(entries)}) entries   🌟")
+    print("•" *50)
+
+    # body
+    for entry in entries:
+
+        # Entry ID and date
+        print(f"\n📝 Entry #{entry['id']}")
+        date_str = entry['entry_date'].strftime("%Y/%m/%d %I:%M %p")
+        print(f"📅 {date_str}")
+
+        # Mood with emoji
+        if entry['mood']:
+            mood_emoji = MOOD_EMOJIS.get(entry['mood'].lower(),'')
+            print(f"🎭 Mood : {entry['mood']} {mood_emoji}")
+        
+        if entry['tags']:
+            print(f"🏷️ Tags: {entry['tags']}")
+
+        # wourd count
+        if entry.get('word_count'):
+            print(f"📊 Words: {entry['word_count']}")
+
+        # Entry content
+        print(f"\n{entry['entry_text']}")
+        print("-" *40)
+
+    input("\n>>Press ENTER to return to the menu >")
+    clear_screen()
 
 
 def search_entries(db):

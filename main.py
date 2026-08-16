@@ -1,14 +1,15 @@
 from database.journal_database import JournalDatabase
+
 from features.write_entry import write_entry
 from features.view_entries import view_entries
-# from features.search_entries import search_entries
-from utils.display import display_menu
-from utils.display import clear_screen
+from features.search_entries import search_entries
+
+from utils.display import display_menu, clear_screen
 
 
 def main():
     clear_screen()
-    db = JournalDatabase
+    db = JournalDatabase()
 
     while True:
         display_menu()
@@ -22,7 +23,8 @@ def main():
             view_entries(db)
 
         elif choice == "3":
-            search_entries(db)
+            # search_entries(db)
+            print("Search is not available yet :(")
 
         elif choice == "7":
             print("\n 🙋🏻‍♂️Goodbye!")
